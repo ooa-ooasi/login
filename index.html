@@ -1,0 +1,183 @@
+<?php
+ob_start();
+session_start();
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+include('matrix/userlogin.php');
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <meta name="description" content="OOA System Matrix Portal — authorized personnel login for tax calendar and filing deadlines.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <main class="shell">
+    <section class="login-panel" aria-label="Login form">
+      <div>
+        <div class="brand">
+          <img src="img/logo.png" alt="Company Logo">
+          <div class="brand-title">
+            <strong>OOA System</strong>
+            <span>Matrix Portal</span>
+          </div>
+        </div>
+
+        <p class="eyebrow"><i class="fas fa-shield-alt"></i> Authorized users only</p>
+
+        <form id="loginform" action="<?= $_SERVER['PHP_SELF'] ?>" method="post">
+          <?php user_login(); ?>
+
+          <div class="field">
+            <label for="username">Access ID</label>
+            <div class="input-wrap">
+              <i class="fas fa-id-badge"></i>
+              <input type="text" name="username" id="username" required placeholder="Enter your Access ID" minlength="4" maxlength="5" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" name="password" id="password" required placeholder="Enter your password" autocomplete="off">
+              <button class="icon-button" id="password-toggle" type="button" aria-label="Show password"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+
+          <button class="submit" type="submit" name="btnsubmit"><i class="fas fa-arrow-right"></i> Sign In</button>
+        </form>
+
+        <p class="footnote">For office use only. Activity may be monitored to protect client and system information.</p>
+      </div>
+    </section>
+
+    <section class="content-panel" aria-label="Calendar portal">
+      <div class="topbar">
+        <span class="date-chip">2026 Filing Calendar</span>
+        <span class="system-status"><i class="fas fa-check-circle"></i> System available</span>
+      </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel announcement-box">
+          <div class="panel-header">
+            <div>
+              <h2>Announcements &amp; Guidelines <span class="announcement-new-count" id="announcement-new-count" hidden></span></h2>
+              <!--<span>Latest notices after sign in</span>-->
+            </div>
+          </div>
+
+          <div class="announcement-content" id="announcement-content" aria-live="polite"></div>
+        </article>
+
+        <article class="panel calendar-box calendar-card">
+          <div class="cal-header calendar-title">
+            <button class="cal-nav" id="cal-prev" aria-label="Previous month"><i class="fas fa-chevron-left"></i></button>
+            <h2 id="cal-title"></h2>
+            <button class="cal-nav" id="cal-next" aria-label="Next month"><i class="fas fa-chevron-right"></i></button>
+          </div>
+
+          <div class="cal-grid-head">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+            <span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+
+          <!-- div class="cal-legend" id="cal-legend" aria-label="Deadline type legend"></div -->
+
+          <!--<div class="cal-legend">
+            <span class="legend-dot dot-red"></span><span>BIR Deadline</span>
+            <span class="legend-dot dot-yellow"></span><span>Quarterly</span>
+            <span class="legend-dot dot-today"></span><span>Today</span>
+          </div-->
+        </article>
+      </div>
+
+      <div class="deadline-strip">
+        <article class="deadline-box panel" id="upcoming-box">
+          <h3><i class="fas fa-clock"></i> Upcoming Deadlines</h3>
+          <div class="deadline-list" id="upcoming-list"></div>
+        </article>
+
+        <article class="deadline-box panel" id="month-box">
+          <h3 id="month-box-title"><i class="fas fa-calendar-alt"></i> <span id="month-box-label"></span> - All Deadlines</h3>
+          <div class="deadline-list" id="month-list"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="lightbox" class="lightbox">
+    <span class="close">&times;</span>
+    <img class="lightbox-content" id="lightbox-img" alt="AITR guideline preview">
+    <button class="prev" aria-label="Previous image">&#10094;</button>
+    <button class="next" aria-label="Next image">&#10095;</button>
+  </div>
+
+  <div id="cal-tooltip" class="cal-tooltip"></div>
+
+  <!-- Announcement detail modal -->
+  <div id="announcement-modal-overlay" class="date-modal-overlay announcement-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="announcement-modal-title">
+    <div class="date-modal announcement-modal">
+      <div class="date-modal-header">
+        <div class="date-modal-title-wrap">
+          <i class="fas fa-bullhorn date-modal-icon announcement-modal-icon" id="announcement-modal-icon"></i>
+          <h3 id="announcement-modal-title"></h3>
+        </div>
+        <button class="date-modal-close" id="announcement-modal-close" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="date-modal-count" id="announcement-modal-subtitle"></div>
+      <div class="date-modal-body announcement-modal-body" id="announcement-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Date detail modal -->
+  <div id="date-modal-overlay" class="date-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="date-modal-title">
+    <div class="date-modal">
+      <div class="date-modal-header">
+        <div class="date-modal-title-wrap">
+          <i class="fas fa-calendar-day date-modal-icon"></i>
+          <h3 id="date-modal-title"></h3>
+        </div>
+        <button class="date-modal-close" id="date-modal-close" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="date-modal-count" id="date-modal-count"></div>
+      <div class="date-modal-body" id="date-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="js/announcements-source.js"></script>
+  <script src="js/lightbox.js"></script>
+  <script src="js/security.js"></script>
+  <script src="js/announcements.js"></script>
+  <script src="js/tax-calendar.js"></script>
+  <script>
+    const passwordToggle = document.getElementById("password-toggle");
+    const passwordInput = document.getElementById("password");
+
+    passwordToggle.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      passwordToggle.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      passwordToggle.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+    });
+  </script>
+</body>
+
+</html>
